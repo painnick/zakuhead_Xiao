@@ -1,0 +1,6 @@
+{
+    "board": "Seeeduino:samd:seeed_XIAO_m0",
+    "sketch": "ZakuHead_3_Xiao.ino",
+    "port": "COM17",
+    "configuration": "usbstack=arduino,debug=off"
+}
