@@ -2,12 +2,15 @@
 
 #define LED_PIN   1
 #define SERVO_PIN 5
+#define SOUND_SENSOR_PIN 3
 
 Scenario *scenario;
 
 void setup() {
-  scenario = new Scenario(LED_PIN, SERVO_PIN);
-  Serial.begin(115200);
+  scenario = new Scenario(LED_PIN, SERVO_PIN, SOUND_SENSOR_PIN);
+  #ifdef USE_SERIAL
+    Serial.begin(115200);
+  #endif
   scenario->attach();
 }
 
@@ -22,11 +25,20 @@ void loop() {
       play_step = 100;
     }
   }
-  
+
   scenario->breathe1(1000, 100, 15, 195);
-  delay(500);
-  analogWrite(LED_PIN, 127);
-  delay(3000);
-  
-  loop_index = (loop_index + 1) % play_step;
+  if (scenario->isClapped()) {
+    loop_index = 0;
+  } else {
+    if(scenario->waitUntilClapping(500)) {
+      loop_index = 0;
+    } else {
+      analogWrite(LED_PIN, 127);
+      if (scenario->waitUntilClapping(3000)) {
+        loop_index = 0;
+      } else {
+        loop_index = (loop_index + 1) % play_step;
+      }
+    }
+  }
 }

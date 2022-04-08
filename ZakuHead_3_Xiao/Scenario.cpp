@@ -1,13 +1,16 @@
 #include <Arduino.h>
 #include "Scenario.h"
 
-#define NOT_USE_SERIAL
+#define CLAP_THRESHOLD 800
+#define CLAPPING_CHECK_INTERVAL_MS 2
 
-Scenario::Scenario(int ledPin, int servoPin)
-  : _ledPin(ledPin), _servoPin(servoPin) {
+Scenario::Scenario(int ledPin, int servoPin, int soundSensorPin)
+  : _ledPin(ledPin), _servoPin(servoPin), _soundSensorPin(soundSensorPin), _clapped(false) {
 }
 
 void Scenario::attach() {
+  pinMode(_soundSensorPin, INPUT);
+
   _servo.attach(_servoPin);
   _angle = 0;
   _servo.write(90 + 0);
@@ -83,6 +86,8 @@ void Scenario::flash1() {
 
 int Scenario::breathe1(int time_total, int time_step, int min_bright, int max_bright) {
 
+  resetClapped();
+
   #ifdef USE_SERIAL
     Serial.print("[breathe1] ");
     Serial.print("time_total=");Serial.print(time_total);Serial.print(", ");
@@ -112,7 +117,7 @@ int Scenario::breathe1(int time_total, int time_step, int min_bright, int max_br
     #endif
     
     analogWrite(_ledPin, bright);
-    delay(time_step);
+    delayWithClappingCheck(time_step);
   }
     
   #ifdef USE_SERIAL
@@ -122,7 +127,7 @@ int Scenario::breathe1(int time_total, int time_step, int min_bright, int max_br
   #endif
     
   analogWrite(_ledPin, max_bright);
-  delay(time_step);
+  delayWithClappingCheck(time_step);
 
   for(int i = 1; i < count/ 2 + 1; i ++) {
     int bright = max_bright - bright_step * i;
@@ -134,7 +139,7 @@ int Scenario::breathe1(int time_total, int time_step, int min_bright, int max_br
     #endif
     
     analogWrite(_ledPin, bright);
-    delay(time_step);
+    delayWithClappingCheck(time_step);
   }
 }
 
@@ -183,4 +188,45 @@ void Scenario::scenario1() {
   #ifdef USE_SERIAL
     Serial.println("End scenario1 =====");
   #endif
+}
+
+void Scenario::resetClapped() {
+  _clapped = false;
+}
+
+void Scenario::checkClapped() {
+  uint32_t value = analogRead(_soundSensorPin);
+  if (value > CLAP_THRESHOLD) {
+    #ifdef USE_SERIAL
+      Serial.println("CLAP!");
+    #endif
+    _clapped = true;
+  }
+}
+
+bool Scenario::isClapped() {
+  return _clapped;
+}
+
+void Scenario::delayWithClappingCheck(unsigned long ms) {
+  for(unsigned long i = 0; i < ms; i += CLAPPING_CHECK_INTERVAL_MS) {
+    delay(CLAPPING_CHECK_INTERVAL_MS);
+    if(!isClapped()) {
+      #ifdef USE_SERIAL
+        Serial.printf("Check clapping %ul\n", i);
+      #endif
+      checkClapped();
+    }
+  }
+}
+
+bool Scenario::waitUntilClapping(unsigned long ms) {
+  for(unsigned long i = 0; i < ms; i += CLAPPING_CHECK_INTERVAL_MS) {
+    delay(CLAPPING_CHECK_INTERVAL_MS);
+    checkClapped();
+    if (isClapped()) {
+      return true;
+    }
+  }
+  return false;
 }
