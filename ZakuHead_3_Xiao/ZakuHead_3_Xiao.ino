@@ -15,15 +15,11 @@ void setup() {
 }
 
 int loop_index = 0;
-int play_step = 5;
 
 void loop() {
   if(loop_index == 0) {
+    scenario->resetClapped();
     scenario->scenario1();
-    play_step *= 2;
-    if(play_step > 100) {
-      play_step = 100;
-    }
   }
 
   scenario->breathe1(1000, 100, 15, 195);
@@ -37,7 +33,7 @@ void loop() {
       if (scenario->waitUntilClapping(3000)) {
         loop_index = 0;
       } else {
-        loop_index = (loop_index + 1) % play_step;
+        loop_index = (loop_index + 1) % 1000;
       }
     }
   }
