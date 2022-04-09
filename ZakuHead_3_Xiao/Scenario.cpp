@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include "Scenario.h"
 
-#define CLAP_THRESHOLD 800
-#define CLAPPING_CHECK_INTERVAL_MS 2
+#define CLAP_THRESHOLD 1000
+#define CLAPPING_CHECK_INTERVAL_MS 3
 
 Scenario::Scenario(int ledPin, int servoPin, int soundSensorPin)
   : _ledPin(ledPin), _servoPin(servoPin), _soundSensorPin(soundSensorPin), _clapped(false) {
